@@ -1,3 +1,5 @@
+> Fork of [unclebob/crapper](https://github.com/unclebob/crapper) at `6fd92c4`, adding Ruby/Rails support (grcarey/agents_and_skills#131).
+
 # crapper
 
 CRAP scores for Clojure, Java, Go, TypeScript, Rust, Python, and Ruby. One run detects the language of each source file, applies that language's complexity and coverage rules, and writes the snapshot [uml-viewer](https://github.com/unclebob/uml-viewer) already reads.
