@@ -1,4 +1,4 @@
-"""Load Cloverage, LCOV, JaCoCo, and Go coverage profiles.
+"""Load Cloverage, LCOV, SimpleCov JSON, JaCoCo, and Go coverage profiles.
 
 Clojure prefers Cloverage's per-line form counts, then LCOV. Java uses JaCoCo
 instruction counters. Go uses statement profiles. LCOV scores a function by
@@ -8,6 +8,7 @@ its BRDA branch records when it has any, and by line hits otherwise.
 
 from __future__ import annotations
 
+import json
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
@@ -278,6 +279,19 @@ def parse_lcov(text: str) -> dict[str, FileCoverage]:
     return out
 
 
+def parse_simplecov(text: str) -> dict[str, FileCoverage]:
+    """SimpleCov's `coverage.json`: a `lines` array per file, `null` for non-code lines."""
+
+    out: dict[str, FileCoverage] = {}
+    for path, entry in json.loads(text).get("coverage", {}).items():
+        record = FileCoverage()
+        for number, hits in enumerate(entry.get("lines", []), start=1):
+            if hits is not None:
+                record[number] = (1 if hits > 0 else 0, 1)
+        out[path] = record
+    return out
+
+
 def branch_percent(record, start: int, end: int) -> float | None:
     """Branch coverage for a function, or None when that span has no branches."""
 
@@ -514,6 +528,9 @@ def _merge_lcov(root: Path) -> dict[str, dict[int, tuple[int, int]]]:
     merged: dict[str, dict[int, tuple[int, int]]] = {}
     for text in _merge_texts(_lcov_paths(root)):
         merged.update(parse_lcov(text))
+    # ponytail: only coverage/coverage.json, not .resultset.json; add when a project lacks the JSON formatter
+    for text in _merge_texts([root / "coverage" / "coverage.json"]):
+        merged.update(parse_simplecov(text))
     return merged
 
 

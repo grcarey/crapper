@@ -6,6 +6,7 @@ from crapper.coverage import (
     parse_go_profile,
     parse_jacoco_index,
     parse_lcov,
+    parse_simplecov,
 )
 from crapper.model import Function
 
@@ -158,3 +159,18 @@ def test_load_bundle_merges_each_report(tmp_path):
     assert bundle.percent_for(function(start_line=3, end_line=4)) == 50.0
     assert bundle.go_profile is not None
     assert bundle.jacoco is not None
+
+
+def test_simplecov_lines_skip_non_executable_and_score_a_method():
+    text = '{"coverage": {"app/models/plan.rb": {"lines": [null, 1, 0, 4, null, 0]}}}'
+    bundle = CoverageBundle(lcov=parse_simplecov(text))
+    ruby = function(path="app/models/plan.rb", language="ruby", start_line=1, end_line=6)
+    assert bundle.percent_for(ruby) == 50.0
+
+
+def test_load_bundle_reads_simplecov_json(tmp_path):
+    report = tmp_path / "coverage" / "coverage.json"
+    report.parent.mkdir()
+    report.write_text('{"coverage": {"app/a.rb": {"lines": [1, 0]}}}', encoding="utf-8")
+    bundle = load_bundle(tmp_path)
+    assert bundle.percent_for(function(path="app/a.rb", language="ruby", start_line=1, end_line=2)) == 50.0
