@@ -562,6 +562,17 @@ def _cover_rust(root: Path, files: list[Path]) -> None:
             _warn(f"Rust coverage exited {code} in {module}. Rust coverage will score 0%.")
 
 
+def _cover_ruby(root: Path) -> None:
+    # ponytail: Rails only (bin/rails test, SimpleCov gated on COVERAGE); add rspec when a project needs it
+    if not (root / "bin" / "rails").is_file():
+        _warn("No bin/rails; skipping Ruby coverage.")
+        return
+    (root / "coverage" / "coverage.json").unlink(missing_ok=True)
+    code = run_shell("COVERAGE=1 bin/rails test", root)
+    if code != 0:
+        _warn(f"Rails tests exited {code}. Coverage was still recorded if SimpleCov finished.")
+
+
 def run_coverage(root: Path, files: list[Path], command: str | None) -> int:
     """Generate coverage reports for the languages present in `files`.
 
@@ -593,4 +604,6 @@ def run_coverage(root: Path, files: list[Path], command: str | None) -> int:
         _cover_python(root, files)
     if "rust" in languages:
         _cover_rust(root, files)
+    if "ruby" in languages:
+        _cover_ruby(root)
     return 0

@@ -547,3 +547,16 @@ def test_vitest_install_restores_manifests_when_install_changes_them(tmp_path, m
 def test_python_sources_name_a_top_level_module_without_its_suffix(tmp_path):
     module = tmp_path / "carddav.py"
     assert python_sources(tmp_path, [module, tmp_path / "test_carddav.py"]) == "carddav"
+
+
+def test_ruby_coverage_runs_rails_tests_with_simplecov_enabled(tmp_path, monkeypatch):
+    (tmp_path / "bin").mkdir()
+    (tmp_path / "bin" / "rails").write_text("", encoding="utf-8")
+    stale = tmp_path / "coverage" / "coverage.json"
+    stale.parent.mkdir()
+    stale.write_text("{}", encoding="utf-8")
+    issued = []
+    monkeypatch.setattr("crapper.runners.run_shell", lambda command, cwd: issued.append((command, cwd)) or 0)
+    run_coverage(tmp_path, [tmp_path / "app" / "models" / "plan.rb"], None)
+    assert issued == [("COVERAGE=1 bin/rails test", tmp_path.resolve())]
+    assert not stale.exists()

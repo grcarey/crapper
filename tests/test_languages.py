@@ -20,4 +20,4 @@ def test_each_language_answers_the_same_message(language, source, path, name):
 
 
 def test_unknown_language_has_no_functions():
-    assert functions_in_file("ruby", "def x\nend\n", "a.rb", "/proj") == []
+    assert functions_in_file("cobol", "def x\nend\n", "a.cob", "/proj") == []
